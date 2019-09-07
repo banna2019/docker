@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source .
+source /etc/profile
 
 echo -n "Please enter your PACKAGE_DOWNLOAD_URL: " 
 read PACKAGE_DOWNLOAD_URL

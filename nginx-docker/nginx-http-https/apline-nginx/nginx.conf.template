@@ -1,0 +1,88 @@
+
+user  nginx;
+worker_processes  1;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request_time" "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+#server {                                   
+#        listen  80;                                
+       # server_name  10.120.3.173,18.162.56.120;        
+#        location / {                            
+       #   root        html;                       
+#           proxy_pass   http://m20-elb-merchant-253315980.ap-southeast-1.elb.amazonaws.com; 
+#           index  index.html index.htm;      
+#        }
+       
+#        location /mqtt {
+#           proxy_pass          http://elb-mqtt-8083-1863697849.ap-southeast-1.elb.amazonaws.com;
+#           proxy_set_header    X-Real-IP $remote_addr;
+           #proxy_set_header    Host $host:@CDN_PORT@;
+#           proxy_redirect      off;
+#           proxy_http_version  1.1;
+#           proxy_set_header    Upgrade $http_upgrade;
+#           proxy_set_header    Connection "upgrade";
+#           proxy_send_timeout 6000;
+#           proxy_read_timeout 6000;
+#           proxy_connect_timeout 6000;          
+#        }    
+#    }
+
+server {
+    listen 80;
+    rewrite ^(.*)$ https://$host$1 permanent;
+}
+
+
+    server {
+
+        listen 443 ssl http2;
+        #server_name cshh9.com www.cshh9.com;
+        ssl_certificate      /etc/pki/tls/ca.crt;
+        ssl_certificate_key  /etc/pki/tls/server.key;
+
+        location / {
+           #root        html;
+           proxy_pass   @MERCHANT_ELB_ADD@; 
+           index  index.html index.htm;
+        }
+
+        location /mqtt {
+           proxy_pass          @MQTT_ELB_ADD@;
+           proxy_set_header    X-Real-IP $remote_addr;
+           #proxy_set_header    Host $host:@CDN_PORT@;
+           proxy_redirect      off;
+           proxy_http_version  1.1;
+           proxy_set_header    Upgrade $http_upgrade;
+           proxy_set_header    Connection "upgrade";
+           proxy_send_timeout 6000;
+           proxy_read_timeout 6000;
+           proxy_connect_timeout 6000;
+        }
+    }
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    include /etc/nginx/conf.d/*.conf;
+}
+
