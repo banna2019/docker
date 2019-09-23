@@ -1,0 +1,19 @@
+version: '3.4'
+
+services:
+  jenkins:
+    container_name: jenkins
+    hostname: jenkins
+    image: jenkins/jenkins:lts
+    network_mode: host
+    restart: always
+    ports:
+      - 10080:8080
+      - 50000:50000
+    volumes:
+      - /data1/jenkins:/var/jenkins_home
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
