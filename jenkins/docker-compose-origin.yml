@@ -8,10 +8,10 @@ services:
     network_mode: host
     restart: always
     ports:
-      - 10080:8080
+      - 8080:8080
       - 50000:50000
     volumes:
-      - /data1/jenkins:/var/jenkins_home
+      - /data/jenkins:/var/jenkins_home
     logging:
       driver: json-file
       options:

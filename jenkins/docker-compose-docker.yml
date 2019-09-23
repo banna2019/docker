@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  jenkins:
+    container_name: jenkins
+    hostname: jenkins
+    image: jenkins/jenkins:lts
+    privileged: true
+    user: root
+    network_mode: host
+    restart: always
+    ports:
+      - 8080:8080
+      - 50000:50000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - /usr/lib64/libltdl.so.7:/usr/lib/x86_64-linux-gnu/libltdl.so.7
+      - /data/jenkins:/var/jenkins_home
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
