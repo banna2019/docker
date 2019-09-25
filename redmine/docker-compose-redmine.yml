@@ -1,0 +1,26 @@
+version: '3.1'
+
+services:
+
+  redmine:
+    image: redmine:alpine
+    restart: always
+    ports:
+      - 8080:3000
+    environment:
+      REDMINE_DB_MYSQL: db
+      REDMINE_DB_PASSWORD: abc123
+    volumes:
+      - /data/redmine/datadir:/usr/src/redmine/files
+
+  db:
+    image: mysql:5.7
+    restart: always
+    ports:
+      - 360:3306
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --init-connect='SET NAMES utf8mb4;' --innodb-flush-log-at-trx-commit=0
+    environment:
+      MYSQL_ROOT_PASSWORD: abc123
+      MYSQL_DATABASE: redmine
+    volumes:
+      - /data/redmine/datadir:/var/lib/mysql:rw
