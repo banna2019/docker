@@ -64,6 +64,37 @@ services:
         max-file: '3'
         max-size: 100m
 
+  node-exporter:
+    image: prom/node-exporter:v0.18.1
+    network_mode: host
+    hostname: exporter
+    restart: always
+    volumes:
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+      - /proc:/host/proc
+      - /sys:/host/sys
+      - /:/rootfs 
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
+    command: 
+      - --path.rootfs=/host
+      - --collector.systemd
+      - --collector.mountstats
+      - --collector.processes
+      - --collector.interrupts
+      - --collector.textfile.directory=/usr
+      - --collector.filesystem.ignored-fs-types=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)
+      - --collector.diskstats.ignored-devices=^(ram|loop|fd|(h|s|v|xv)d[a-z]|nvme\\d+n\\d+p)\\d+$$
+      - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($$|/)
+      - --collector.systemd.unit-whitelist=^ceph.*$$
+    ports:
+      - '9100:9100'
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
+
+
   grafana:
     image: grafana/grafana:6.3.5
     network_mode: host
@@ -84,3 +115,4 @@ services:
 volumes:
   grafana_data: {}
   prometheus_data: {}
+
