@@ -67,7 +67,7 @@ services:
   node-exporter:
     image: prom/node-exporter:v0.18.1
     network_mode: host
-    hostname: exporter
+    hostname: node-exporter
     restart: always
     volumes:
       - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
@@ -94,6 +94,20 @@ services:
         max-file: '3'
         max-size: 100m
 
+  pushgateway:
+    image: prom/pushgateway:v1.0.0
+    network_mode: host
+    hostname: node-pushgateway
+    restart: always
+    volumes:
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    ports:
+      - '9091:9091'
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
 
   grafana:
     image: grafana/grafana:6.3.5

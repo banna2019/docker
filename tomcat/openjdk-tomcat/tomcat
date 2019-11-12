@@ -56,7 +56,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk del .build-deps \
     && rm -rf   ${CATALINA_HOME}/bin/*.bat \
                 ${CATALINA_HOME}/bin/tomcat-native.tar.gz \
-                ${CATALINA_HOME}/webapps/* \
+                #${CATALINA_HOME}/webapps/* \
                 tomcat.tar.gz
     
 
