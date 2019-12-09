@@ -1,0 +1,15 @@
+# ======================== Elasticsearch Configuration =========================
+cluster.name: es-cluster
+node.name: data01
+node.master: false
+node.data: true
+node.attr.rack: r1 
+bootstrap.memory_lock: true 
+http.port: 9201
+network.host: 0.0.0.0
+transport.tcp.port: 9301
+discovery.seed_hosts: ["10.10.10.106:9300","10.10.10.106:9302","10.10.10.106:9303","10.10.10.106:9304"] 
+cluster.initial_master_nodes: ["master"] 
+gateway.recover_after_nodes: 2
+http.cors.enabled: true
+http.cors.allow-origin: "*"
