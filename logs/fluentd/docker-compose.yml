@@ -1,0 +1,13 @@
+version: '3'
+services:
+  fluentd:
+    image: fluent1.7:v1.0
+    restart: always
+    network_mode: host
+    command: fluent-gem install fluent-plugin-kafka
+    volumes:
+      - ${FLD_CONFIG_FILE}:/fluentd/etc/fluent.conf:ro
+      - ${FLD_LOGS_DIR}:/fluentd/log
+    #ports:
+    #  - 24224:24224
+    #  - 24224:24224/udp
