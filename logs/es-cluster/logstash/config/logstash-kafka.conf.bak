@@ -1,0 +1,229 @@
+# Sample Logstash configuration for creating a simple
+# Beats -> Logstash -> Elasticsearch pipeline.
+
+input {
+    #用户系统控台日志
+    kafka{
+        bootstrap_servers => "10.11.48.160:9092"
+        topics =>  ["elk-console-server"]
+                    group_id => "elk-console-server"
+                    type => "elk-console-server"
+    }
+    #用户系统国际版控台日志
+    kafka{
+        bootstrap_servers => "10.11.48.160:9092"
+        topics =>  ["elk-global-console-server"]
+                    group_id => "elk-global-console-server"
+                    type => "elk-global-console-server"
+    }
+    #用户系统应用服务器日志   
+    kafka{
+        bootstrap_servers => "10.11.48.160:9092"
+        topics =>  ["elk-main-server"]
+                    group_id => "elk-main-server"
+                    type => "elk-main-server"
+    }
+    #用户系统国际版应用服务器日志   
+    kafka{
+        bootstrap_servers => "10.11.48.160:9092"
+        topics =>  ["elk-global-main-server"]
+                    group_id => "elk-global-main-server"
+                    type => "elk-global-main-server"
+    }
+    #国际版nginx日志
+    kafka{
+            bootstrap_servers => "10.11.48.160:9092"
+            topics =>  ["elk-global-nginx-access"]
+                        group_id => "elk-global-nginx-access"
+                        type => "elk-global-nginx-access"
+    } 
+    #用户系统nginx日志
+    kafka{
+            bootstrap_servers => "10.11.48.160:9092"
+            topics =>  ["elk-nginx-access"]
+                        group_id => "elk-nginx-access"
+                        type => "elk-nginx-access"
+    } 
+    #用户系统nginx日志  
+    kafka{
+            bootstrap_servers => "10.11.48.160:9092"
+            topics =>  ["elk-nginx-error"]
+                        group_id => "elk-nginx-error"
+                        type => "elk-nginx-error"
+    }
+    #国际版nginx日志  
+    kafka{
+            bootstrap_servers => "10.11.48.160:9092"
+            topics =>  ["elk-global-nginx-error"]
+                        group_id => "elk-global-nginx-error"
+                        type => "elk-global-nginx-error"
+    }
+    #elk测试用户系统日志   
+    kafka{
+            bootstrap_servers => "10.11.48.160:9092"
+            topics =>  ["elk-test-server"]
+                        group_id => "elk-test-server"
+                        type => "elk-test-server"
+    }   
+}
+
+filter{ 
+    #处理nginx日志
+    if [type] in ["elk-global-nginx-access", "elk-nginx-access"]{
+        #filebeat过来的数据,要先经过一层解析,得到的message才是真实的日志内容
+        #测试kafka过来的数据,会解析两次,但无所谓，不影响结果
+        json{
+            source => "message"
+            #target => "jsoncontent"
+        }
+        #这一层，才是解析日志内容
+        json{
+            source => "message"
+            #target => "jsoncontent"
+
+        }
+
+        ruby {
+              code => "event.set('index_day', event.get('@timestamp').time.localtime + 8*60*60)"
+        }
+
+        mutate{
+            #remove_field => ["_@timestamp"]
+            convert => ["index_day", "string"]
+                    gsub => ["index_day", "T([\S\s]*?)Z", ""]
+                    gsub => ["index_day", "-", "."]
+        }
+
+        #if ["time_iso8601"]
+        #date {
+        #   match => ["time_iso8601", "yyyy-MM-dd'T'HH:mm:ss Z"]
+        #   target => "@timestamp"
+        #}
+
+
+        useragent{
+            source => "http_user_agent"
+            target => "useragent"
+        }
+
+        geoip{              
+            source => "remote_addr"
+        target => "geoip"
+        database => "/usr/local/elk/logstash-7.2.0/config/GeoLite2-City_20190730/GeoLite2-City.mmdb"
+        add_field => [ "[geoip][coordinates]", "%{[geoip][longitude]}" ]
+        add_field => [ "[geoip][coordinates]", "%{[geoip][latitude]}" ]
+    }
+
+
+        mutate{
+        convert => [ "[geoip][coordinates]", "float"]
+                #convert => ["bytes_sent","integer"]
+        }
+        mutate {
+         convert => [ "status","integer" ]
+         #convert => [ "body_bytes_sent","integer" ]
+         #convert => [ "upstream_response_time","float" ]
+         #remove_field => "message"
+        }
+    }
+
+
+    if [type] in ["elk-global-nginx-error", "elk-nginx-error"]{
+    grok {
+        patterns_dir => ["/usr/local/elk/logstash-7.2.0/config/patterns"]
+        match => { 
+                       #"message" => "%{SERV_TIME_OUT:serv_timeout} %{ERROR_HOSTPORT:error_hostport} %{CHECK_HTTP_ERROR:check_http_error}" 
+                        "message" => "%{HOSTPORT:error_hostport}" 
+               }         
+        }
+    json {
+        source => "message"
+    }
+    }
+
+   if [type] in ["elk-main-server", "elk-test-server"]{
+        if ([message] !~ "org.test.elk.services.servlet.SendServiceServlet") {
+             drop {}
+          }
+       grok {
+        match => [
+            "message", "%{TIMESTAMP_ISO8601:reqTime} %{WORD:logLevel} .*\{\[(?<appSysId>\w+)\|(?<serial>\w+).*serviceType=(?<serviceType>\d+).*(usrsysid=(?<usrSysId>\w+)|usrSysId=(?<usrSysId>\w+))",
+            "message", "%{TIMESTAMP_ISO8601:reqTime} %{WORD:logLevel} .*\{\[(?<appSysId>\w+)\|(?<serial>\w+).*serviceType=(?<serviceType>\d+).*",
+            "message", "%{TIMESTAMP_ISO8601:reqTime} %{WORD:logLevel} .*\{\[(?<appSysId>\d+)\|(?<serviceType>\d+)\|(?<serial>\w+).*",
+            "message", "%{TIMESTAMP_ISO8601:reqTime} %{WORD:logLevel} .*\{\[(?<appSysId>\w+)\|(?<serial>\w+).*",
+            "message", "%{TIMESTAMP_ISO8601:reqTime} %{WORD:logLevel} .*"
+        ]
+    }
+    json {
+        source => "message"
+    }
+   }
+
+
+}
+
+output {
+    if [type] == "elk-console-server"{
+            elasticsearch {
+                    hosts => ["10.11.48.160:9200", "10.11.48.160:9200", "10.11.48.160:9200" ]
+                    index => "%{type}-%{+YYYY.MM.dd}"
+                    #document_type => "%{type}"    
+            }
+    }
+    if [type] == "elk-global-console-server"{
+            elasticsearch {
+                    hosts => ["10.11.48.160:9200", "10.11.48.160:9200", "10.11.48.160:9200" ]
+                    index => "%{type}-%{+YYYY.MM.dd}"
+                    #document_type => "%{type}"    
+            }
+    }
+    if [type] == "elk-main-server"{
+            elasticsearch {
+                    hosts => ["10.11.48.160:9200", "10.11.48.160:9200", "10.11.48.160:9200" ]
+                    index => "%{type}-%{+YYYY.MM.dd}"
+                    #document_type => "%{+YYYY.MM.dd}"    
+            }
+    }
+    if [type] == "elk-global-main-server"{
+            elasticsearch {
+                    hosts => ["10.11.48.160:9200", "10.11.48.160:9200", "10.11.48.160:9200" ]
+                    index => "%{type}-%{+YYYY.MM.dd}"
+                    #document_type => "%{+YYYY.MM.dd}"    
+            }
+    }
+    if [type] == "elk-nginx-access"{
+            elasticsearch {
+                    hosts => ["10.11.48.160:9200", "10.11.48.160:9200", "10.11.48.160:9200" ]
+                    index => "%{type}-%{+YYYY.MM.dd}"
+                    #document_type => "%{type}"    
+            }
+    }
+    if [type] == "elk-global-nginx-access"{
+            elasticsearch {
+                    hosts => ["10.11.48.160:9200", "10.11.48.160:9200", "10.11.48.160:9200" ]
+                    index => "%{type}-%{+YYYY.MM.dd}"
+                    #document_type => "%{type}"    
+            }
+    }
+    if [type] == "elk-nginx-error"{
+            elasticsearch {
+                    hosts => ["10.11.48.160:9200", "10.11.48.160:9200", "10.11.48.160:9200" ]
+                    index => "%{type}-%{+YYYY.MM.dd}"
+                    #document_type => "%{type}"    
+            }
+    }
+    if [type] == "elk-global-nginx-error"{
+            elasticsearch {
+                    hosts => ["10.11.48.160:9200", "10.11.48.160:9200", "10.11.48.160:9200" ]
+                    index => "%{type}-%{+YYYY.MM.dd}"
+                    #document_type => "%{type}"    
+            }
+    }
+    if [type] == "elk-test-server"{
+            elasticsearch {
+                    hosts => ["10.11.48.160:9200", "10.11.48.160:9200", "10.11.48.160:9200" ]
+                    index => "%{type}-%{+YYYY.MM.dd}"
+                    #document_type => "%{type}"    
+            }
+    }
+}
