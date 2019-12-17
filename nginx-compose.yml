@@ -1,0 +1,17 @@
+version: "3"
+services:
+    hk-ng:
+        image: xxxxxxx:xxx/ak/hk_ng:latest
+        container_name: merchant-nginx
+        environment:
+            - MERCHANT_ELB_ADD=xxx
+            - MQTT_ELB_ADD=xxx
+        restart: always
+        #network_mode: "host"
+        ports:
+          - 80:80
+          - 8081:443
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
