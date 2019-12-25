@@ -1,0 +1,23 @@
+version: '3.4'
+services:
+  mongodb-node:
+    image: mongo:4.0
+    #network_mode: host       
+    hostname: mongodb
+    restart: always
+    volumes:
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+      - /data/mongodb/conf/mongod.conf:/etc/mongod.conf
+      - /data/mongodb/logs/mongod.log:/var/log/mongod.log
+      - /data/mongodb/data/data:/data/db
+    command: mongod --config /etc/mongod.conf
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root    
+      - MONGO_INITDB_ROOT_PASSWORD=123456 
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
