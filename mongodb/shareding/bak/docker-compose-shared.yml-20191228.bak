@@ -1,0 +1,198 @@
+version: '3.1'
+services:
+  rs1_shared01:
+    image: mongo:4.0
+    container_name: rs1_container1
+    restart: always
+    ports:
+      - 20001:20001
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/shard/db1:/data/db1
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    command: mongod --shardsvr --directoryperdb --replSet rs1 --port 20001 --dbpath /data/db1 --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+        
+  rs1_shared02:
+    image: mongo:4.0
+    container_name: rs1_container2
+    restart: always
+    ports:
+      - 20002:20001
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/shard/db2:/data/db2
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    command: mongod --shardsvr --directoryperdb --replSet rs1 --port 20001 --dbpath /data/db2 --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+        
+  rs1_shared03:
+    image: mongo:4.0
+    container_name: rs1_container3
+    restart: always
+    ports:
+      - 20003:20001
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/shard/db3:/data/db3
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    command: mongod --shardsvr --directoryperdb --replSet rs1 --port 20001 --dbpath /data/db3 --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+        
+  rs2_shared01:
+    image: mongo:4.0
+    container_name: rs2_container1
+    restart: always
+    ports:
+      - 20011:20001
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/shard/db4:/data/db4
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    command: mongod --shardsvr --directoryperdb --replSet rs2 --port 20001 --dbpath /data/db4 --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+        
+  rs2_shared02:
+    image: mongo:4.0
+    container_name: rs2_container2
+    restart: always
+    ports:
+      - 20012:20001
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/shard/db5:/data/db5
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    command: mongod --shardsvr --directoryperdb --replSet rs2 --port 20001 --dbpath /data/db5 --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+        
+  rs2_shared03:
+    image: mongo:4.0
+    container_name: rs2_container3
+    restart: always
+    ports:
+      - 20013:20001
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/shard/db6:/data/db6
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    command: mongod --shardsvr --directoryperdb --replSet rs2 --port 20001 --dbpath /data/db6 --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+        
+  crs_config01:
+    image: mongo:4.0
+    restart: always
+    container_name: config_container1
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/config/cdb1:/data/db
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    ports:
+      - 27021:27021
+    command: mongod --configsvr --directoryperdb --replSet mongo-config --smallfiles --port 27021 --dbpath /data/db --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@ 
+
+  crs_config02:
+    image: mongo:4.0
+    restart: always
+    container_name: config_container2
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/config/cdb2:/data/db
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    ports:
+      - 27022:27022
+    command: mongod --configsvr --directoryperdb --replSet mongo-config --smallfiles --port 27022 --dbpath /data/db --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+
+  mongos01:
+    image: mongo:4.0
+    restart: always
+    container_name: mongos_container1
+    ports:
+      - 27017:27017
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    depends_on:
+      - crs_config01
+      - crs_config02
+    entrypoint: mongos
+    #entrypoint: 
+    #  - bash
+    #  - -c
+    #  - |
+    #    chmod 400 /data/mongodb.key
+    #    chown 999:999 /data/mongodb.key
+    #    exec docker-entrypoint.sh $$@
+    command: --configdb mongo-config/crs_config01:27021,crs_config02:27022 --bind_ip 0.0.0.0 --port 27017 --keyFile /data/mongodb.key
+
+  mongos02:
+    image: mongo:4.0
+    restart: always
+    container_name: mongos_container2
+    ports:
+      - 27018:27018
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    depends_on:
+      - crs_config01
+      - crs_config02
+    entrypoint: mongos
+    #entrypoint: 
+    #  - bash
+    #  - -c
+    #  - |
+    #    chmod 400 /data/mongodb.key
+    #    chown 999:999 /data/mongodb.key
+    #    exec docker-entrypoint.sh $$@
+    command: --configdb mongo-config/crs_config01:27021,crs_config02:27022 --bind_ip 0.0.0.0 --port 27018 --keyFile /data/mongodb.key
+

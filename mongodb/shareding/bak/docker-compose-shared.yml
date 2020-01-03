@@ -1,0 +1,80 @@
+version: '3.1'
+services:
+  rs1_share1:
+    image: mongo:4.0
+    restart: always
+    container_name: rs1_container1
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/shard/db1:/data/db1
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    ports:
+      - 27007:27007
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - mongoNet
+    #command: mongod --replSet mongos --keyFile /data/mongodb.key
+    command: mongod --shardsvr --directoryperdb --replSet rs1 --port 27007 --dbpath /data/db1 --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+
+  rs1_share2:
+    image: mongo:4.0
+    restart: always
+    container_name: rs1_container2
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/shard/db2:/data/db2
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    ports:
+      - 27008:27008
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - mongoNet
+    #command: mongod --replSet mongos --keyFile /data/mongodb.key
+    command: mongod --shardsvr --directoryperdb --replSet rs1 --port 27008 --dbpath /data/db2 --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+
+  rs1_share3:
+    image: mongo:4.0
+    restart: always
+    container_name: rs1_container3
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/mongodb/shard/db3:/data/db3
+      - /data/mongodb/keyFile/mongodb.key:/data/mongodb.key
+    ports:
+      - 27009:27009
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - mongoNet
+    #command: mongod --replSet mongos --keyFile /data/mongodb.key
+    command: mongod --shardsvr --directoryperdb --replSet rs1 --port 27009 --dbpath /data/db3 --keyFile /data/mongodb.key
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /data/mongodb.key
+        chown 999:999 /data/mongodb.key
+        exec docker-entrypoint.sh $$@
+    
+networks:
+  mongoNet:
+    driver: bridge

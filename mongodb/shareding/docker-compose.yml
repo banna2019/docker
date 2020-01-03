@@ -1,0 +1,173 @@
+version: '3'
+services:
+  rs_config_server:
+    image: mongo:4.0
+    command: mongod --configsvr --dbpath /data/db --replSet "rs-config-server" --port 27019
+    #command: mongod -f /etc/mongod/mongod.conf --configsvr --replSet "rs-config-server" --port 27019
+    volumes:
+      - /database/vol/key.file:/data/mongodb/key.file
+      #- /database/vol/config/config:/etc/mongod
+      - /database/vol/config/db:/data/db
+    ports:
+      - "10021:27019"
+    restart:
+      always
+    container_name:
+      rs_config_server
+    ulimits:
+      nofile:
+        soft: 300000
+        hard: 300000
+
+  rs_config_server1:
+    image: mongo:4.0
+    command: mongod --configsvr --dbpath /data/db --replSet "rs-config-server" --port 27019
+    #command: mongod -f /etc/mongod/mongod.conf --configsvr --replSet "rs-config-server" --port 27019
+    volumes:
+      - /database/vol/key.file:/data/mongodb/key.file
+      #- /database/vol/config1/config:/etc/mongod
+      - /database/vol/config1/db:/data/db
+    ports:
+      - "10022:27019"
+    restart:
+      always
+    container_name:
+      rs_config_server1
+    ulimits:
+      nofile:
+        soft: 300000
+        hard: 300000
+
+  rs_config_server2:
+    image: mongo:4.0
+    command: mongod --configsvr --dbpath /data/db --replSet "rs-config-server" --port 27019
+    #command: mongod -f /etc/mongod/mongod.conf --configsvr --replSet "rs-config-server" --port 27019
+    volumes:
+      - /database/vol/key.file:/data/mongodb/key.file
+      #- /database/vol/config2/config:/etc/mongod
+      - /database/vol/config2/db:/data/db
+    ports:
+      - "10023:27019"
+    restart:
+      always
+    container_name:
+      rs_config_server2
+    ulimits:
+      nofile:
+        soft: 300000
+        hard: 300000
+
+  rs_shard_server1:
+    image: mongo:4.0
+    command: mongod --directoryperdb --dbpath /data/db --shardsvr --replSet "rs-shard1-server" --port 27018
+    #command: mongod -f /etc/mongod/mongod.conf --directoryperdb --shardsvr --replSet "rs-shard1-server" --port 27018
+    volumes:
+      - /database/vol/key.file:/data/mongodb/key.file
+      #- /database/vol/shard1/config:/etc/mongod
+      - /database/vol/shard1/db:/data/db
+    ports:
+      - "10031:27018"
+    restart:
+      always
+    container_name:
+      rs_shard_server1
+    ulimits:
+      nofile:
+        soft: 300000
+        hard: 300000
+
+  rs_shard_server2:
+    image: mongo:4.0
+    command: mongod --directoryperdb --dbpath /data/db --shardsvr --replSet "rs-shard1-server" --port 27018
+    #command: mongod -f /etc/mongod/mongod.conf --directoryperdb --shardsvr --replSet "rs-shard2-server" --port 27018
+    volumes:
+      - /database/vol/key.file:/data/mongodb/key.file
+      #- /database/vol/shard2/config:/etc/mongod
+      - /database/vol/shard2/db:/data/db
+    ports:
+      - "10032:27018"
+    restart:
+      always
+    container_name:
+      rs_shard_server2
+    ulimits:
+      nofile:
+        soft: 300000
+        hard: 300000
+
+  rs_shard_server3:
+    image: mongo:4.0
+    command: mongod --directoryperdb --dbpath /data/db --shardsvr --replSet "rs-shard2-server" --port 27018
+    #command: mongod -f /etc/mongod/mongod.conf --directoryperdb --shardsvr --replSet "rs-shard2-server" --port 27018
+    volumes:
+      - /database/vol/key.file:/data/mongodb/key.file
+      #- /database/vol/shard3/config:/etc/mongod
+      - /database/vol/shard3/db:/data/db
+    ports:
+      - "10041:27018"
+    restart:
+      always
+    container_name:
+      rs_shard_server3
+    ulimits:
+      nofile:
+        soft: 300000
+        hard: 300000
+
+  rs_shard_server4:
+    image: mongo:4.0
+    command: mongod  --directoryperdb --dbpath /data/db --shardsvr --replSet "rs-shard2-server" --port 27018
+    #command: mongod -f /etc/mongod/mongod.conf --directoryperdb --shardsvr --replSet "rs-shard2-server" --port 27018
+    volumes:
+      - /database/vol/key.file:/data/mongodb/key.file
+      #- /database/vol/shard4/config:/etc/mongod
+      - /database/vol/shard4/db:/data/db
+    ports:
+      - "10042:27018"
+    restart:
+      always
+    container_name:
+      rs_shard_server4
+    ulimits:
+      nofile:
+        soft: 300000
+        hard: 300000
+
+  rs_mongos_server1:
+    image: mongo:4.0
+    entrypoint: mongos
+    command: --configdb rs-config-server/${IP_ADDR}:10021,${IP_ADDR}:10022 --port 20001 --bind_ip_all
+    #command: --configdb rs-config-server/${IP_ADDR}:10021,${IP_ADDR}:10022 --port 20001 --keyFile /data/mongodb/key.file
+    ports:
+      - "10011:20001"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /database/vol/key.file:/data/mongodb/key.file
+    restart:
+      always
+    container_name:
+      rs_mongos_server1
+    ulimits:
+      nofile:
+        soft: 300000
+        hard: 300000
+
+  rs_mongos_server2:
+    image: mongo:4.0
+    entrypoint: mongos
+    command: --configdb rs-config-server/${IP_ADDR}:10021,${IP_ADDR}:10022 --port 20001 --bind_ip_all
+    #command: --configdb rs-config-server/${IP_ADDR}:10021,${IP_ADDR}:10022 --port 20001 --keyFile /data/mongodb/key.file
+    ports:
+      - "10012:20001"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /database/vol/key.file:/data/mongodb/key.file
+    restart:
+      always
+    container_name:
+      rs_mongos_server2
+    ulimits:
+      nofile:
+        soft: 300000
+        hard: 300000
+

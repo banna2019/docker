@@ -1,0 +1,55 @@
+version: '3.4'
+services:
+  shard1:
+    image: mongo:4.0
+    command: mongod --shardsvr --directoryperdb --replSet shard1
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/fates/mongo/shard1:/data/db
+
+  shard2:
+    image: mongo:4.0
+    command: mongod --shardsvr --directoryperdb --replSet shard2
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/fates/mongo/shard2:/data/db
+
+  shard3:
+    image: mongo:4.0
+    command: mongod --shardsvr --directoryperdb --replSet shard3
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/fates/mongo/shard3:/data/db
+
+  config1:
+    image: mongo:4.0
+    command: mongod --configsvr --directoryperdb --replSet fates-mongo-config --smallfiles
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/fates/mongo/config1:/data/configdb
+
+  config2:
+    image: mongo:4.0
+    command: mongod --configsvr --directoryperdb --replSet fates-mongo-config --smallfiles
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/fates/mongo/config2:/data/configdb
+
+  config3:
+    image: mongo:4.0
+    command: mongod --configsvr --directoryperdb --replSet fates-mongo-config --smallfiles
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /data/fates/mongo/config3:/data/configdb
+
+  mongos:
+    image: mongo:4.0
+    command: mongos --configdb fates-mongo-config/config1:27019,config2:27019,config3:27019 --bind_ip 0.0.0.0 --port 27017
+    ports:
+      - 27017:27017
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - config1
+      - config2
+      - config3

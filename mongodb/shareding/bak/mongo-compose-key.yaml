@@ -1,0 +1,62 @@
+version: '3.4'
+services:
+  shard1:
+    image: mongo:4.0
+    command: mongod --shardsvr --directoryperdb --replSet shard1 --keyFile /data/mongo-keyfile
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /data/fates/mongo/shard1:/data/db
+      - /data/fates/mongo/script/mongo-keyfile:/data/mongo-keyfile
+
+  shard2:
+    image: mongo:4.0
+    command: mongod --shardsvr --directoryperdb --replSet shard2 --keyFile /data/mongo-keyfile
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /data/fates/mongo/shard2:/data/db
+      - /data/fates/mongo/script/mongo-keyfile:/data/mongo-keyfile
+
+  shard3:
+    image: mongo:4.0
+    command: mongod --shardsvr --directoryperdb --replSet shard3 --keyFile /data/mongo-keyfile
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /data/fates/mongo/shard3:/data/db
+      - /data/fates/mongo/script/mongo-keyfile:/data/mongo-keyfile
+
+  config1:
+    image: mongo:4.0
+    command: mongod --configsvr --directoryperdb --replSet fates-mongo-config --smallfiles --keyFile /data/mongo-keyfile
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /data/fates/mongo/config1:/data/configdb
+      - /data/fates/mongo/script/mongo-keyfile:/data/mongo-keyfile
+
+  config2:
+    image: mongo:4.0
+    command: mongod --configsvr --directoryperdb --replSet fates-mongo-config --smallfiles --keyFile /data/mongo-keyfile
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /data/fates/mongo/config2:/data/configdb
+      - /data/fates/mongo/script/mongo-keyfile:/data/mongo-keyfile
+
+  config3:
+    image: mongo:4.0
+    command: mongod --configsvr --directoryperdb --replSet fates-mongo-config --smallfiles --keyFile /data/mongo-keyfile
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /data/fates/mongo/config3:/data/configdb
+      - /data/fates/mongo/script/mongo-keyfile:/data/mongo-keyfile
+
+  mongos:
+    image: mongo:4.0
+    command: mongos --configdb fates-mongo-config/config1:27019,config2:27019,config3:27019 --bind_ip 0.0.0.0 --port 27017 --keyFile /data/mongo-keyfile
+    ports:
+      - 27017:27017
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /data/fates/mongo/script/mongo-keyfile:/data/mongo-keyfile
+    depends_on:
+      - config1
+      - config2
+      - config3
