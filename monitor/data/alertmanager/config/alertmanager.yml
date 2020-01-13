@@ -1,24 +1,31 @@
 global:
   smtp_smarthost: 'smtp.mail.us-east-1.awsapps.com:465'
-  smtp_from: 'banna@sixthnet.com'
-  smtp_auth_username: 'banna@sixthnet.com'
-  smtp_auth_password: 'lvO3UI2mi-TM'
+  smtp_from: 'xxxx@xxxx.com'
+  smtp_auth_username: 'xxxx@xxxx.com'
+  smtp_auth_password: 'xxxxxx'
   smtp_require_tls: false
   resolve_timeout: 5m
 templates:
   - 'template/*.tmpl'
 route:
   group_by: ['alertname']
-  group_wait: 10s
-  group_interval: 10s
-  repeat_interval: 5m
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 1h
   receiver: 'default'
 receivers:
   - name: 'default'
     email_configs:
-    - to: 'ops@sixthnet.com'
-      headers: { Subject: "[WARN] 报警邮件"}
+    - to: 'xxx@xxxx.com,xxxx@xxxx.com'
+      headers: { Subject: "[WARN] xxxx-报警邮件"}
       send_resolved: true
+    webhook_configs:
+    - url: 'http://xxxxx:9119/alert'
+      send_resolved: true
+      http_config:
+        basic_auth:
+          username: 'xxxx'
+          password: 'xxxx'
 inhibit_rules: 
   - source_match: 
       severity: 'critical' 
