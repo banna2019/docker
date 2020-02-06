@@ -1,0 +1,166 @@
+version: "3"
+services:
+    es-master:
+        image: elasticsearch:7.2.0
+        container_name: es-master
+        environment: # setting container env
+            - ES_JAVA_OPTS=${ES_JVM_OPTS}   # set es bootstrap jvm args
+        restart: always
+        volumes:
+            - ${MASTER_CONFIG_FILE}:/usr/share/elasticsearch/config/elasticsearch.yml
+            - ${MASTER_DATA_DIR}:/usr/share/elasticsearch/data:rw
+            - ${MASTER_LOGS_DIR}:/usr/share/elasticsearch/logs:rw
+        network_mode: "host"
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+
+    es-tribe:
+        image: elasticsearch:7.2.0
+        container_name: es-tribe
+        environment: # setting container env
+            - ES_JAVA_OPTS=${ES_JVM_OPTS}   # set es bootstrap jvm args
+        restart: always
+        volumes:
+            - ${TRIBE_COFNIG_FILE}:/usr/share/elasticsearch/config/elasticsearch.yml
+            - ${TRIBE_DATA_DIR}:/usr/share/elasticsearch/data:rw
+            - ${TRIBE_LOGS_DIR}:/usr/share/elasticsearch/logs:rw
+        network_mode: "host"
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+
+    es-data01:
+        image: elasticsearch:7.2.0
+        container_name: es-data01
+        environment: # setting container env
+            - ES_JAVA_OPTS=${ES_JVM_OPTS}   # set es bootstrap jvm args
+            #- "ES_JAVA_OPTS=-Xms2048m -Xmx2048m" 
+        restart: always
+        volumes:
+            - ${NODE01_CONFIG_FILE}:/usr/share/elasticsearch/config/elasticsearch.yml
+            - ${NODE01_DATA_DIR}:/usr/share/elasticsearch/data:rw
+            - ${NODE01_LOGS_DIR}:/usr/share/elasticsearch/logs:rw
+        network_mode: "host"
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+
+    es-data02:
+        image: elasticsearch:7.2.0
+        container_name: es-data02
+        environment: # setting container env
+            - ES_JAVA_OPTS=${ES_JVM_OPTS}   # set es bootstrap jvm args
+        restart: always
+        volumes:
+            - ${NODE02_CONFIG_FILE}:/usr/share/elasticsearch/config/elasticsearch.yml
+            - ${NODE02_DATA_DIR}:/usr/share/elasticsearch/data:rw
+            - ${NODE02_LOGS_DIR}:/usr/share/elasticsearch/logs:rw
+        network_mode: "host"
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+
+    es-data03:
+        image: elasticsearch:7.2.0
+        container_name: es-data03
+        environment: # setting container env
+            - ES_JAVA_OPTS=${ES_JVM_OPTS}   # set es bootstrap jvm args
+        restart: always
+        volumes:
+            - ${NODE03_CONFIG_FILE}:/usr/share/elasticsearch/config/elasticsearch.yml
+            - ${NODE03_DATA_DIR}:/usr/share/elasticsearch/data:rw
+            - ${NODE03_LOGS_DIR}:/usr/share/elasticsearch/logs:rw
+        network_mode: "host"
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+
+    kibana:
+        container_name: kibana
+        hostname: kibana
+        image: kibana:7.2.0
+        restart: always
+        network_mode: "host"
+        #ports:
+        #  - 5601:5601
+        volumes:
+          - ${KIBANA_CONFIG_FILE}:/usr/share/kibana/config/kibana.yml
+        environment:
+          - elasticsearch.hosts=http://es-master:9200
+        depends_on:
+          - es-master
+          - es-tribe
+          - es-data01
+          - es-data02
+          - es-data03
+    
+    es-head:
+     container_name: es-head
+     image: mobz/elasticsearch-head:5
+     restart: always
+     ports:
+       - 9100:9100
+     depends_on:
+          - es-master
+          - es-tribe
+          - es-data01
+          - es-data02
+          - es-data03
+    
+    filebeat:
+        # 容器名称
+        container_name: filebeat
+        # 主机名称
+        hostname: filebeat
+        # 镜像
+        image: elastic/filebeat:7.2.0
+        # 重启机制
+        restart: always
+        # 网络模式
+        network_mode: "host"
+        # 持久化挂载
+        volumes:
+          - ${FILEBEAT_CONFIG_FILE}:/usr/share/filebeat/filebeat.yml
+          # 映射到容器中[作为数据源]
+          - ${FILEBEAT_PROJECT_LOG_DIR}:/home/project/spring-boot-elasticsearch/logs
+          - ${FILEBEAT_LOGS_DIR}:/usr/share/filebeat/logs
+          - ${FILEBEAT_DATA_DIR}:/usr/share/filebeat/data
+        # 将指定容器连接到当前连接，可以设置别名，避免ip方式导致的容器重启动态改变的无法连接情况
+        links:
+          - logstash
+        # 依赖服务[可无]
+        depends_on:
+          - es-master
+          - es-tribe
+          - es-data01
+          - es-data02
+          - es-data03
+    
+    logstash:
+        container_name: logstash
+        hostname: logstash
+        image: logstash:7.2.0
+        command: logstash -f ./conf/logstash-filebeat.conf
+        restart: always
+        volumes:
+          # 映射到容器中
+          - ${LOGSTASH_CONFIG_FILE}:/usr/share/logstash/conf/logstash-filebeat.conf
+        environment:
+          - elasticsearch.hosts=http://es-master:9200
+          # 解决logstash监控连接报错
+          - xpack.monitoring.elasticsearch.hosts=http://es-master:9200
+        network_mode: "host"
+        #ports:
+        #  - 5044:5044
+        depends_on:
+          - es-master
+          - es-tribe
+          - es-data01
+          - es-data02
+          - es-data03
