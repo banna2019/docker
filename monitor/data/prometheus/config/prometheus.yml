@@ -34,3 +34,7 @@ scrape_configs:
     file_sd_configs:
      - files: ['/etc/prometheus/discovery/process.yml']
        refresh_interval: 5s
+   - job_name: 'process-ceph'
+    file_sd_configs:
+     - files: ['/etc/prometheus/discovery/ceph.yml']
+       refresh_interval: 5s
