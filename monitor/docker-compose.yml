@@ -3,6 +3,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.12.0
     network_mode: host
+    container_name: node-prometheus
     hostname: prometheus
     restart: always
     volumes:
@@ -29,6 +30,7 @@ services:
 
   alertmanager:
     image: prom/alertmanager:v0.18.0
+    container_name: node-altermanager
     network_mode: host
     hostname: alertmanager
     restart: always
@@ -46,6 +48,7 @@ services:
 
   cadvisor:
     image: google/cadvisor:v0.33.0
+    container_name: node-cadvisor
     network_mode: host
     hostname: cadvisor
     restart: always
@@ -66,6 +69,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v0.18.1
+    container_name: node-exporter
     network_mode: host
     hostname: node-exporter
     restart: always
@@ -96,6 +100,7 @@ services:
 
   pushgateway:
     image: prom/pushgateway:v1.0.0
+    container_name: node-pushgateway
     network_mode: host
     hostname: node-pushgateway
     restart: always
@@ -111,6 +116,7 @@ services:
 
   grafana:
     image: grafana/grafana:6.3.5
+    container_name: node-grafana
     network_mode: host
     hostname: grafana
     restart: always
@@ -120,6 +126,23 @@ services:
       - '/data/grafana/data:/var/lib/grafana'
     ports:
       - '3000:3000'
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
+
+  node-ceph:
+    image: banna1990/ceph_exporter:v1.0
+    container_name: node-ceph
+    network_mode: host
+    hostname: node-ceph
+    restart: always
+    volumes:
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+      - /etc/ceph:/etc/ceph
+    ports:
+      - '9128:9128'
     logging:
       driver: json-file
       options:
