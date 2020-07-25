@@ -38,6 +38,8 @@ services:
       - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
       - /data/alertmanager/config/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - /data/alertmanager/data:/alertmanager
+    command:
+      - '--web.external-url=http://192.168.2.12:9093'
     ports:
       - '9093:9093'
     logging:
