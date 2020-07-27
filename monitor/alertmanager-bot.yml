@@ -1,0 +1,26 @@
+version: '3.4'
+services:
+  alertmanager-bot:
+    image: metalmatze/alertmanager-bot:0.4.2
+    #network_mode: host
+    container_name: alertmanager-bot
+    hostname: alertmanager_bot
+    restart: always
+    environment:
+      TELEGRAM_ADMIN: "1320501040"
+      TELEGRAM_TOKEN: "1124168894:AAG9F97ENkJyawhUB9JZ8tVkcSJA2rjyjS0"
+    volumes:
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+      - /data/alertmanager/alertmanager-bot:/data
+    command:
+      - '--alertmanager.url=http://192.168.2.12:9093'
+      - '--log.level=info'
+      - '--store=bolt'
+      - '--bolt.path=/data/bot.db'
+    ports:
+      - '8081:8080'
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
