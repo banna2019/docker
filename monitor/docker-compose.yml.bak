@@ -72,7 +72,7 @@ services:
         max-size: 100m
 
   node-exporter:
-    image: prom/node-exporter:v1.0.1
+    image: node_exporter:v1.0
     container_name: node-exporter
     network_mode: host
     hostname: node-exporter
@@ -119,4 +119,41 @@ services:
       options:
         max-file: '3'
         max-size: 100m
+
+  pushgateway:
+    image: prom/pushgateway:v1.0.0
+    container_name: node-pushgateway
+    network_mode: host
+    hostname: node-pushgateway
+    restart: always
+    volumes:
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    ports:
+      - '9091:9091'
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
+
+  node-ceph:
+    image: banna1990/ceph_exporter:v1.0
+    container_name: node-ceph
+    network_mode: host
+    hostname: node-ceph
+    restart: always
+    volumes:
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+      - /etc/ceph:/etc/ceph
+    ports:
+      - '9128:9128'
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
+
+volumes:
+  grafana_data: {}
+  prometheus_data: {}
 
